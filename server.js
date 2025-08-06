@@ -160,6 +160,51 @@ app.get('/api/setup-database', async (req, res) => {
   }
 });
 
+// Database test endpoint
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const mysql = require('mysql2/promise');
+    
+    console.log('🔍 Testing database connection...');
+    console.log('DB_HOST:', process.env.DB_HOST);
+    console.log('DB_USER:', process.env.DB_USER);
+    console.log('DB_NAME:', process.env.DB_NAME);
+    console.log('DB_PORT:', process.env.DB_PORT);
+    
+    // Create connection
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT || 3306
+    });
+
+    console.log('✅ Database connection successful');
+
+    // Test query
+    const [rows] = await connection.execute('SELECT COUNT(*) as userCount FROM users');
+    console.log('✅ Database query successful');
+
+    await connection.end();
+
+    res.json({ 
+      status: 'success', 
+      message: 'Database connection test successful',
+      userCount: rows[0].userCount,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Database test failed:', error.message);
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Database test failed: ' + error.message,
+      details: error.stack
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
